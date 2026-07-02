@@ -310,6 +310,10 @@
      CONFIG — Rick: the values most likely to change live here.
      ============================================================ */
   var LEAD_ENDPOINT = "https://nh-starter-credit.rick-026.workers.dev/"; // nh-starter-credit Worker
+  // Anonymous plan-built beacon -> your existing calc-events Worker (same one the
+  // bulk calculator uses). Lets the daily digest show plans built vs credits claimed.
+  // Confirm the subdomain matches your deployed worker; set to "" to disable.
+  var CALC_EVENTS_ENDPOINT = "https://calc-events.rick-026.workers.dev/api/calc-event";
   var CREDIT_BY_SIZE = { 10:30, 20:40, 30:60 }; // starter credit tied to the recommended box size
   var EXPIRY_DAYS = 7;                   // starter credit validity window
 
@@ -353,6 +357,9 @@
   var RECIPE_KEY = { turkey:"Original", beef:"Beef", pork:"Pork", lamb:"Lamb" };
   var RECIPE_LABEL = { Original:"Turkey", Beef:"Beef", Pork:"Pork", Lamb:"Lamb" };
 
+  // ⚠ PRICE WATCH: 30 lb is hardcoded at $4.83/lb ($144.90/box). When the 30 lb box
+  // moves to $199, update to 30:6.63 or this page understates the box cost — and the
+  // $60 credit's real discount % changes. Revisit CREDIT_BY_SIZE at the same time.
   var PRICES_STD  = { 5:10.59, 10:7.49, 20:5.49, 30:4.83 };
   var PRICES_LAMB = { 5:14.60, 10:10.00, 20:8.70, 30:8.67 };
   var BOX_SIZES = [5,10,20,30];
@@ -373,6 +380,55 @@
      State
      ============================================================ */
   var state = { name:"", weight:45, activity:"Normal", current:null, goal:null, recipe:null, matters:null };
+
+  /* ============================================================
+     Tokenized link — identity travels in the URL.
+     Send each lead:  ?lid=CLOSE_LEAD_ID&e=EMAIL&dn=DogName
+       lid = Close lead ID (attribution survives even if they retype the email)
+       e   = account email, plain or base64 (base64 keeps it out of casual view)
+       dn  = dog's name (pre-fills the quiz)
+     All optional — page works untokenized for walk-in/QR traffic.
+     ============================================================ */
+  var TOKEN = (function(){
+    try {
+      var q = new URLSearchParams(location.search);
+      var e = (q.get("e") || "").trim();
+      if (e && e.indexOf("@") === -1) { try { e = atob(e); } catch(_){ e = ""; } }
+      return {
+        lead_id:  q.get("lid") || null,
+        email:    (e && /@/.test(e)) ? e : null,
+        dog_name: (q.get("dn") || "").trim().slice(0,24) || null
+      };
+    } catch(_){ return { lead_id:null, email:null, dog_name:null }; }
+  })();
+
+  /* Anonymous plan-built beacon (same pattern as the bulk calculator).
+     Fires once per session when a plan renders, whether or not they claim. */
+  function getSessionId(){
+    try {
+      var id = sessionStorage.getItem("nh_sid");
+      if (!id){ id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()); sessionStorage.setItem("nh_sid", id); }
+      return id;
+    } catch(_){ return "nosess-" + Date.now(); }
+  }
+  var _planLogged = false;
+  function logPlanEvent(size, costAfter, dailyFresh, mixLabel){
+    if (_planLogged || !CALC_EVENTS_ENDPOINT) return;
+    _planLogged = true;
+    try {
+      var body = JSON.stringify({
+        session_id:   getSessionId(),
+        dog_weight:   state.weight,
+        box_size:     size + "lb-starter",        // prefix separates these from bulk-calc rows in the digest
+        price_per_mo: costAfter,                   // = cost after credit for the recommended box
+        daily_oz:     +(dailyFresh * 16).toFixed(1),
+        recipes:      [mixLabel],
+        lead_id:      TOKEN.lead_id                // ignored by current worker; harmless extra field
+      });
+      if (navigator.sendBeacon){ navigator.sendBeacon(CALC_EVENTS_ENDPOINT, new Blob([body],{type:"application/json"})); }
+      else { fetch(CALC_EVENTS_ENDPOINT,{method:"POST",body:body,keepalive:true,headers:{"Content-Type":"application/json"}}); }
+    } catch(_){}
+  }
 
   /* ============================================================
      Screen navigation
@@ -396,6 +452,14 @@
 
   /* ===== Name ===== */
   var dogName = document.getElementById("dogName");
+  // Tokenized link knows the dog — warm the open and skip the typing.
+  if (TOKEN.dog_name){
+    dogName.value = TOKEN.dog_name;
+    var introH = document.querySelector('[data-screen="intro"] h1');
+    if (introH) introH.textContent = "Great \u2014 let\u2019s find the easiest way to keep feeding " + TOKEN.dog_name + " fresh.";
+    var introBtn = document.querySelector('[data-screen="intro"] .btn');
+    if (introBtn) introBtn.textContent = "Build " + TOKEN.dog_name + "\u2019s plan";
+  }
   document.getElementById("nameNext").addEventListener("click", function(){
     state.name = dogName.value.trim();
     document.getElementById("weightQ").textContent = state.name ? ("About how much does " + state.name + " weigh?") : "About how much does your dog weigh?";
@@ -589,13 +653,16 @@
     //  Two selectable offers. email_vars (forwarded to Klaviyo)
     //  always describes the box the customer actually chose.
     // ============================================================
-    state._mainPlan = makePlan(size, recKey, isLamb, dailyFresh, exp, fb, mixLabel);
-    state._fallbackPlan = fb ? makePlan(10, recKey, isLamb, dailyFresh, exp, null, mixLabel) : null;
+    state._mainPlan = makePlan(size, recKey, isLamb, dailyFresh, exp, fb, mixLabel, false);
+    state._fallbackPlan = fb ? makePlan(10, recKey, isLamb, dailyFresh, exp, null, mixLabel, true) : null;
     state._plan = state._mainPlan;   // default selection = the recommended box
+
+    // Log the plan-built event — this is your denominator (plans built vs credits claimed).
+    logPlanEvent(size, costAfter, dailyFresh, mixLabel);
   }
 
   // Builds the merge-ready offer object for a given box size.
-  function makePlan(size, recKey, isLamb, dailyFresh, exp, fbObj, mixLabel){
+  function makePlan(size, recKey, isLamb, dailyFresh, exp, fbObj, mixLabel, isFallback){
     var credit = CREDIT_BY_SIZE[size];
     var before = size * perLb(size, isLamb);
     var after  = Math.max(0, before - credit);
@@ -621,8 +688,8 @@
       credit_expires: exp.iso,
       credit_expires_display: exp.display,
       credit_terms: "You have $" + credit + " in store credit, which can only be used on a " + size +
-        " lb box (" + (mixLabel || "Original, Beef & Pork") + "). Valid through " + exp.display + ".",
-      is_fallback: !fbObj && size === 10 ? true : false,
+        " lb box. Valid through " + exp.display + ".",
+      is_fallback: !!isFallback,   // true only when they chose the freezer-space option, not for a recommended 10 lb box
       fallback_box: fbObj ? fbObj.label.replace(/\bbox\b/, "Box") : null,
       fallback_credit: fbObj ? fbObj.credit : null,
       fallback_cost_after_credit: fbObj ? +fbObj.after.toFixed(2) : null,
@@ -660,10 +727,20 @@
   function openCapture(intent){
     captureIntent = intent;
     var c = (state._plan || {}).starter_credit;
-    document.getElementById("captureH").textContent = "What email did you use in-store?";
-    document.getElementById("captureSub").innerHTML =
-      "We'll load your " + (c ? "<strong>$"+c+" credit</strong>" : "starter credit") +
-      " onto your Natural Hounds account. Use the same email you signed up with.";
+    var emailEl = document.getElementById("email");
+    if (TOKEN.email && !emailEl.value){ emailEl.value = TOKEN.email; }
+    if (TOKEN.email){
+      // We sent them this link — confirm, don't interrogate.
+      document.getElementById("captureH").textContent = "Confirm your account email";
+      document.getElementById("captureSub").innerHTML =
+        "We'll load your " + (c ? "<strong>$"+c+" credit</strong>" : "starter credit") +
+        " onto this Natural Hounds account. If you used a different email in-store, change it below.";
+    } else {
+      document.getElementById("captureH").textContent = "What email did you use in-store?";
+      document.getElementById("captureSub").innerHTML =
+        "We'll load your " + (c ? "<strong>$"+c+" credit</strong>" : "starter credit") +
+        " onto your Natural Hounds account. Use the same email you signed up with.";
+    }
     document.getElementById("reserveBtn").textContent = c ? ("Load my $"+c+" credit") : "Load my credit";
     document.getElementById("formErr").classList.remove("show");
     show("capture");
@@ -684,6 +761,10 @@
       source:"feeding-plan", intent:captureIntent,
       verify_account:true,                 // Worker: match this email to a customer, then issue store credit
       email:email,
+      lead_id: TOKEN.lead_id,              // Close lead ID from the tokenized link — attribution even on email mismatch
+      prefilled_email: TOKEN.email,        // what we sent them vs what they submitted
+      email_changed: !!(TOKEN.email && email.toLowerCase() !== TOKEN.email.toLowerCase()),
+      session_id: getSessionId(),          // ties this claim to the plan-built beacon row
       dog_name:state.name||null, dog_weight_lbs:state.weight, activity:state.activity,
       current_feeding:state.current, goal:state.goal, priority:state.matters,
       store_credit:{ amount:p.starter_credit||null, expires:p.credit_expires||null, for_box:p.starter_box||null },
@@ -697,14 +778,14 @@
 
     var finishOk=function(){
       var c=p.starter_credit, box=p.starter_box, size=p.starter_box_size, recipe=p.starter_recipe;
-      var boxDesc = (box || "starter box") + (recipe ? " (" + recipe + ")" : "");
+      var boxDesc = box || "starter box";
       document.getElementById("doneH").textContent = c ? ("Your $"+c+" credit is on your account.") : "Your credit is on your account.";
       document.getElementById("doneSub").innerHTML =
         "You have <strong>$" + c + " in store credit</strong> \u2014 it can only be used on your <strong>" + boxDesc + "</strong>" +
         (p.credit_expires_display ? (", through <strong>" + p.credit_expires_display + "</strong>") : "") + ".";
       document.getElementById("useList").innerHTML =
         '<div class="next-item"><span class="n">1</span><div><strong>In store:</strong> give your name at the register in Babylon, Huntington, or Port Jefferson \u2014 we\u2019ll pull up your account and take $' + c + ' off your ' + size + ' lb box.</div></div>' +
-        '<div class="next-item"><span class="n">2</span><div><strong>Online:</strong> sign in with <strong>' + email + '</strong> at checkout and your $' + c + ' is waiting on your account.</div></div>';
+        '<div class="next-item"><span class="n">2</span><div><strong>Online:</strong> sign in with <strong>' + email + '</strong>, add your ' + size + ' lb box to the cart, and apply your $' + c + ' at checkout.</div></div>';
       document.getElementById("donePremium").innerHTML =
         "<strong>One more thing:</strong> you may be eligible for a <strong>Premium trial</strong> \u2014 our best per-pound pricing on any box size, plus discounts on treats &amp; chews. " +
         "<a href=\""+PREMIUM_URL+"\" target=\"_blank\" rel=\"noopener\">Learn more &rarr;</a>";
