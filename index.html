@@ -128,6 +128,15 @@
   .starter{border:2px solid var(--nh-black);border-radius:18px;padding:22px;margin:0 0 14px;background:#fff;}
   .starter__name{font-family:'Fraunces',serif;font-size:22px;font-weight:500;color:var(--nh-black);margin:0 0 6px;line-height:1.18;}
   .starter__name strong{font-weight:600;}
+  .starter__pick{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--nh-black);border-radius:12px;padding:15px 18px;margin:0 0 12px;}
+  .starter__pick-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.72);margin:0 0 3px;}
+  .starter__pick-size{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:#fff;line-height:1;margin:0;}
+  .starter__pick-meta{font-size:12.5px;color:rgba(255,255,255,.82);text-align:right;line-height:1.35;margin:0;white-space:nowrap;}
+  .credit-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--nh-success);border-radius:12px;padding:12px 18px;margin:0 0 14px;}
+  .credit-hero__amt{font-family:'Fraunces',serif;font-size:23px;font-weight:600;color:#fff;line-height:1.05;}
+  .credit-hero__amt small{display:block;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:rgba(255,255,255,.82);margin-top:3px;}
+  .credit-hero__exp{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:#fff;text-align:right;line-height:1.1;white-space:nowrap;}
+  .credit-hero__exp span{display:block;font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.82);margin-bottom:2px;}
   .starter__recipes{font-size:13.5px;color:var(--nh-slate);margin:0 0 12px;line-height:1.45;}
   .starter__recipes strong{color:var(--nh-black);font-weight:600;}
   .starter__reason{font-size:14px;color:var(--nh-text);margin:0 0 16px;line-height:1.55;}
@@ -192,13 +201,13 @@
       <!-- INTRO -->
       <section class="screen is-active" data-screen="intro">
         <p class="eyebrow">Natural Hounds</p>
-        <h1>Great — let's find the easiest way to keep feeding fresh.</h1>
+        <h1>Your dog tried it — here's the easiest way to keep it going.</h1>
         <div class="timing">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
           About 30 seconds
         </div>
-        <p class="lede">We'll show exactly how much your dog needs, what each option costs, and the <strong>simplest first box to order</strong> — whether you want to go all fresh, mix it in, or just start slow.</p>
-        <div class="reassure"><strong>No subscription. No commitment.</strong> Order as needed — and you'll have a <strong>starter credit</strong> waiting toward your first real box.</div>
+        <p class="lede">You picked up a trial pack in-store. In about 30 seconds we'll show exactly how much your dog needs, what it costs, and the <strong>simplest box to keep feeding fresh</strong> — all fresh, mixed in, or just as a topper.</p>
+        <div class="reassure"><strong>Your starter credit is already waiting.</strong> No subscription, no commitment — order when you're ready and we'll take it off your first real box.</div>
         <button class="btn btn--block" data-next="name">Build my dog's plan</button>
       </section>
 
@@ -208,12 +217,12 @@
         <h2 class="q">What's your dog's name?</h2>
         <div class="field"><input type="text" id="dogName" class="name-input" placeholder="Buddy" autocomplete="off" maxlength="24"></div>
         <button class="btn btn--block" id="nameNext" style="margin-top:20px;">Continue</button>
-        <div class="nav"><button class="back" data-back="intro">Back</button></div>
+        <div class="nav"><button class="back" data-back="intro">Back</button><button class="skip" id="skipName">Skip</button></div>
       </section>
 
       <!-- WEIGHT + ACTIVITY -->
       <section class="screen" data-screen="weight">
-        <p class="eyebrow">Question 2</p>
+        <p class="eyebrow">Question 1</p>
         <h2 class="q" id="weightQ">About how much does your dog weigh?</h2>
         <div class="weight-display">
           <button type="button" class="wstep" id="wMinus" aria-label="Decrease">&minus;</button>
@@ -231,44 +240,17 @@
         <div class="nav"><button class="back" data-back="name">Back</button></div>
       </section>
 
-      <!-- CURRENT FEEDING -->
-      <section class="screen" data-screen="current">
-        <p class="eyebrow">Question 3</p>
-        <h2 class="q">What are you feeding right now?</h2>
-        <div class="options" data-group="current">
-          <button class="option" data-value="kibble"><span class="option__dot"></span>Mostly kibble</button>
-          <button class="option" data-value="wet"><span class="option__dot"></span>Canned or wet food</button>
-          <button class="option" data-value="raw"><span class="option__dot"></span>Raw</button>
-          <button class="option" data-value="some-fresh"><span class="option__dot"></span>Already some fresh food</button>
-          <button class="option" data-value="other"><span class="option__dot"></span>Something else</button>
-        </div>
-        <div class="nav"><button class="back" data-back="weight">Back</button></div>
-      </section>
-
       <!-- GOAL -->
       <section class="screen" data-screen="goal">
-        <p class="eyebrow">Question 4</p>
-        <h2 class="q">What's your goal with fresh food?</h2>
+        <p class="eyebrow">Last one</p>
+        <h2 class="q" id="goalQ">What's your goal with fresh food?</h2>
         <div class="options" data-group="goal">
           <button class="option" data-value="full"><span class="option__dot"></span>Feed 100% fresh</button>
           <button class="option" data-value="mix"><span class="option__dot"></span>Mix with my current food</button>
           <button class="option" data-value="topper"><span class="option__dot"></span>Use it as a topper</button>
           <button class="option" data-value="unsure"><span class="option__dot"></span>Not sure yet</button>
         </div>
-        <div class="nav"><button class="back" data-back="current">Back</button></div>
-      </section>
-
-      <!-- WHAT MATTERS (optional) -->
-      <section class="screen" data-screen="matters">
-        <p class="eyebrow">Last one</p>
-        <h2 class="q">What matters most to you?</h2>
-        <div class="options" data-group="matters">
-          <button class="option" data-value="cost"><span class="option__dot"></span>Lowest cost</button>
-          <button class="option" data-value="health"><span class="option__dot"></span>The healthiest full plan</button>
-          <button class="option" data-value="easy"><span class="option__dot"></span>An easy starting point</button>
-          <button class="option" data-value="variety"><span class="option__dot"></span>Variety for my dog</button>
-        </div>
-        <div class="nav"><button class="back" data-back="goal">Back</button><button class="skip" id="skipMatters">Skip</button></div>
+        <div class="nav"><button class="back" data-back="weight">Back</button></div>
       </section>
 
       <!-- PLAN (rendered) -->
@@ -292,6 +274,7 @@
           <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
           <h1 id="doneH">Your credit is on your account.</h1>
           <p class="lede" id="doneSub">It's ready to use on your starter box, in store or online.</p>
+          <a class="btn btn--block" id="doneCta" target="_blank" rel="noopener" style="display:none;margin:6px 0 16px;"></a>
           <div class="next-list" id="useList"></div>
           <p class="premium" id="donePremium" style="text-align:left;"></p>
           <div class="locations">Find us at <b>Babylon</b>, <b>Huntington</b>, and <b>Port Jefferson</b> — plus local pickup &amp; route delivery across Long Island and NYC.</div>
@@ -339,6 +322,15 @@
     var s = STARTER[size]; if (!s || !s.code) return SHOP;
     return SHOP + "/discount/" + encodeURIComponent(s.code) +
            (s.buy ? ("?redirect=" + encodeURIComponent(s.buy)) : "");
+  }
+  // Drops the exact recommended box in the cart WITHOUT applying a discount code, so
+  // the real account store credit (issued by nh-starter-credit) auto-applies at
+  // checkout when they sign in — no risk of stacking a code on top of the credit.
+  // Falls back to the shop home until the variant IDs in STARTER[].buy are filled in.
+  function boxCartUrl(size){
+    var s = STARTER[size];
+    if (!s || !s.buy || s.buy.indexOf("REPLACE_") > -1) return SHOP;
+    return SHOP + s.buy;
   }
   // ───────────────────────────────────────────────────────────────────
 
@@ -435,14 +427,24 @@
      ============================================================ */
   var screens = {};
   document.querySelectorAll("[data-screen]").forEach(function(el){ screens[el.dataset.screen]=el; });
-  var order = ["intro","name","weight","current","goal","matters","plan","capture","done"];
+  var order = ["intro","name","weight","goal","plan","capture","done"];
   var bar = document.getElementById("bar");
   function progressFor(n){ var i=order.indexOf(n); if(n==="intro")return 0; if(i>=order.indexOf("plan"))return 100; return Math.round((i/ (order.indexOf("plan")-1))*100); }
   function show(n){
     order.forEach(function(s){ screens[s].classList.toggle("is-active", s===n); });
+    personalizeQuestion(n);
     bar.style.width = progressFor(n) + "%";
     if (window.scrollTo) window.scrollTo({top:0,behavior:"auto"});
     requestAnimationFrame(postHeight); setTimeout(postHeight,480);
+  }
+  // Warm the last question with the dog's name once we have it.
+  function personalizeQuestion(n){
+    if (n === "goal"){
+      var gq = document.getElementById("goalQ");
+      if (gq) gq.textContent = state.name
+        ? ("What's the goal for " + state.name + "?")
+        : "What's your goal with fresh food?";
+    }
   }
   function postHeight(){ try{ parent.postMessage({type:"nh-resize",height:document.documentElement.scrollHeight},"*"); }catch(e){} }
   window.addEventListener("load",postHeight); window.addEventListener("resize",postHeight);
@@ -460,12 +462,21 @@
     var introBtn = document.querySelector('[data-screen="intro"] .btn');
     if (introBtn) introBtn.textContent = "Build " + TOKEN.dog_name + "\u2019s plan";
   }
+  // Always present the dog's name capitalized, whatever the customer typed
+  // ("ceeb" -> "Ceeb"), without lowercasing intentional caps like "JoJo".
+  function capitalizeName(s){ return (s || "").replace(/\S+/g, function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }); }
   document.getElementById("nameNext").addEventListener("click", function(){
-    state.name = dogName.value.trim();
+    state.name = capitalizeName(dogName.value.trim());
     document.getElementById("weightQ").textContent = state.name ? ("About how much does " + state.name + " weigh?") : "About how much does your dog weigh?";
     show("weight");
   });
   dogName.addEventListener("keydown", function(e){ if(e.key==="Enter") document.getElementById("nameNext").click(); });
+  var skipName = document.getElementById("skipName");
+  if (skipName) skipName.addEventListener("click", function(){
+    state.name = "";
+    document.getElementById("weightQ").textContent = "About how much does your dog weigh?";
+    show("weight");
+  });
 
   /* ===== Weight + activity ===== */
   var wRange=document.getElementById("wRange"), wNum=document.getElementById("wNum");
@@ -481,7 +492,7 @@
   hold(document.getElementById("wMinus"),-1); hold(document.getElementById("wPlus"),1);
   var actGroup=document.querySelector('[data-group="activity"]');
   actGroup.querySelectorAll(".pill").forEach(function(p){ p.addEventListener("click",function(){ actGroup.querySelectorAll(".pill").forEach(function(o){o.classList.remove("is-selected");}); p.classList.add("is-selected"); state.activity=p.dataset.value; }); });
-  document.getElementById("weightNext").addEventListener("click",function(){ setW(wNum.value,"num"); show("current"); });
+  document.getElementById("weightNext").addEventListener("click",function(){ setW(wNum.value,"num"); show("goal"); });
 
   /* ===== Tap-to-advance single selects ===== */
   function wireGroup(group, key, next){
@@ -494,15 +505,12 @@
       });
     });
   }
-  wireGroup("current","current","goal");
-  wireGroup("goal","goal","matters");
-  wireGroup("matters","matters","plan");
-  document.getElementById("skipMatters").addEventListener("click",function(){ state.matters=null; renderPlan(); show("plan"); });
+  wireGroup("goal","goal","plan");
 
   /* ============================================================
      Plan computation
      ============================================================ */
-  function dogWord(){ return state.name ? state.name : "Your dog"; }
+  function dogWord(){ return state.name ? state.name : "your dog"; }
   function dogPoss(){ return state.name ? state.name + "'s" : "Your dog's"; }
 
   // recipes that make up the "full fresh" amount, given recipe interest
@@ -604,7 +612,17 @@
       // ── THE recommendation (hero) ──
       '<p class="section-label">Recommended starter plan</p>' +
       '<div class="starter">' +
-        '<p class="starter__name">Recommended for ' + dogWord() + ': <strong>' + size + ' lb box</strong></p>' +
+        '<div class="starter__pick">' +
+          '<div class="starter__pick-l">' +
+            '<p class="starter__pick-label">' + (state.name ? ("Recommended for " + state.name) : "Our recommendation") + '</p>' +
+            '<p class="starter__pick-size">' + size + ' lb Box</p>' +
+          '</div>' +
+          '<p class="starter__pick-meta">~' + lastDays + ' days<br>of food</p>' +
+        '</div>' +
+        '<div class="credit-hero">' +
+          '<div class="credit-hero__amt">$' + credit + ' credit<small>applied to this box</small></div>' +
+          '<div class="credit-hero__exp"><span>use by</span>' + exp.display + '</div>' +
+        '</div>' +
         '<p class="starter__recipes">Our most popular mix \u2014 <strong>' + mixLabel + '</strong>, in even portions.</p>' +
         '<p class="starter__reason">' + reason + '</p>' +
         '<div class="starter__rows">' +
@@ -621,8 +639,7 @@
         whySizeHtml +
       '</div>' +
 
-      // ── credit tied to THIS order + urgency ──
-      '<div class="credit"><b>$' + credit + ' starter credit</b><span>Applied to your ' + size + ' lb box \u2014 not a generic coupon.</span></div>' +
+      // ── urgency reminder near the CTA ──
       '<p class="expiry"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Your starter credit is valid for ' + EXPIRY_DAYS + ' days \u2014 <strong>use by ' + exp.display + '</strong>.</p>' +
 
       // ── freezer-space fallback (visually secondary, but selectable) ──
@@ -640,14 +657,14 @@
         '<button class="btn btn--block" id="toReserve">Claim My Starter Credit</button>' +
       '</div>' +
       '<p class="fineprint">No subscription, no auto-charge. Use it in any Natural Hounds location or online \u2014 your credit is waiting on your account.</p>' +
-      '<div class="nav" style="margin-top:8px;"><button class="back" data-back="matters">Back</button></div>';
+      '<div class="nav" style="margin-top:8px;"><button class="back" data-back="goal">Back</button></div>';
 
     var ps = document.getElementById("planScreen");
     ps.innerHTML = planHtml;
     ps.querySelector("#toReserve").addEventListener("click", function(){ selectOffer("main","reserve"); });
     var fbBtn = ps.querySelector("#toFallback");
     if (fbBtn) fbBtn.addEventListener("click", function(){ selectOffer("fallback","reserve"); });
-    ps.querySelector('[data-back="matters"]').addEventListener("click", function(){ show("matters"); });
+    ps.querySelector('[data-back="goal"]').addEventListener("click", function(){ show("goal"); });
 
     // ============================================================
     //  Two selectable offers. email_vars (forwarded to Klaviyo)
@@ -783,9 +800,21 @@
       document.getElementById("doneSub").innerHTML =
         "You have <strong>$" + c + " in store credit</strong> \u2014 it can only be used on your <strong>" + boxDesc + "</strong>" +
         (p.credit_expires_display ? (", through <strong>" + p.credit_expires_display + "</strong>") : "") + ".";
+      var cta = document.getElementById("doneCta");
+      var cartUrl = boxCartUrl(size);
+      if (cta){
+        if (cartUrl !== SHOP){
+          cta.href = cartUrl;
+          cta.textContent = "Order " + (state.name ? state.name + "\u2019s" : "my") + " " + size + " lb box online \u2192";
+          cta.style.display = "block";
+        } else { cta.style.display = "none"; }
+      }
+      var onlineStep = (cartUrl !== SHOP)
+        ? ('<strong>Online:</strong> tap the button above, then sign in with <strong>' + email + '</strong> at checkout \u2014 your $' + c + ' comes off automatically.')
+        : ('<strong>Online:</strong> sign in with <strong>' + email + '</strong>, add your ' + size + ' lb box to the cart, and your $' + c + ' comes off automatically at checkout.');
       document.getElementById("useList").innerHTML =
         '<div class="next-item"><span class="n">1</span><div><strong>In store:</strong> give your name at the register in Babylon, Huntington, or Port Jefferson \u2014 we\u2019ll pull up your account and take $' + c + ' off your ' + size + ' lb box.</div></div>' +
-        '<div class="next-item"><span class="n">2</span><div><strong>Online:</strong> sign in with <strong>' + email + '</strong>, add your ' + size + ' lb box to the cart, and apply your $' + c + ' at checkout.</div></div>';
+        '<div class="next-item"><span class="n">2</span><div>' + onlineStep + '</div></div>';
       document.getElementById("donePremium").innerHTML =
         "<strong>One more thing:</strong> you may be eligible for a <strong>Premium trial</strong> \u2014 our best per-pound pricing on any box size, plus discounts on treats &amp; chews. " +
         "<a href=\""+PREMIUM_URL+"\" target=\"_blank\" rel=\"noopener\">Learn more &rarr;</a>";
